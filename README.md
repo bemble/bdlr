@@ -17,7 +17,7 @@ npm install --save bdlr
 var bdlr = require('bldr');
 
 bdlr.createBundle('css', bdlr.STYLE).includeFile('bower_components/angular/angular.css').includeGlob('bower_components/*/*.css');
-bdlr.createBundle§('lib', bdlr.SCRIPT).includeFile('bower_components/angular/angular.js').includeGlob('bower_components/*/*.js', ['bower_components/*/index.js', 'bower_components/*/*-mocks.js']);
+bdlr.createBundle('lib', bdlr.SCRIPT).includeFile('bower_components/angular/angular.js').includeGlob('bower_components/*/*.js', ['bower_components/*/index.js', 'bower_components/*/*-mocks.js']);
 bdlr.createBundle('app', bdlr.SCRIPT).includeFile('app/app.js').includeGlob('app/**/*.js').includeFile('app/bootstrap.js');
 
 var app = express();
