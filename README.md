@@ -52,18 +52,47 @@ html
 **Bdlr**
 
 * `bundles:Object`: collection of registred bundles 
-* `createBundle(name:string, type:bdlr.SCRIPT|bdlr.STYLE):Bundle`
+* `createBundle(name:string, type:bdlr.SCRIPT|bdlr.STYLE, renderedUrl:string):Bundle`: `renderedUrl` is what is rendered in production 
+* `ENV:string`: current environnement, default is `process.env.NODE_ENV`. Can be set but only `prod[uction]` change the `Bundle` behaviors.
 
 **Bundle**
 
+* `constructor(type:Bundle.SCRIPT|Bundle.STYLE, renderedUrl:string)`
+* `type:number`: type of bundle (script or style), `type` param of the constructor
+* `url:string`: `renderedUrl` param of the constructor
 * `files:string[]`: final list of files in the bundle
 * `includeFile(filePath:string)`
 * `includeGlob(glob:string, ignoredGlobs:string[])`
-* `toString()`: get html tags of the bundle
+* `toString():string`: get html tags of the bundle
+* `getMinifiedContent():string`: get the minified content of the bundle
+
+## Serve production bundles files with Express
+
+:warning: You should consider a file cache to increase performances.
+
+```javascript
+// ...
+var app = express();
+var bdlr = require('bdlr');
+bdlr.createBundle('style', bdlr.STYLE, '/style.css').includeGlob('bower_components/*/*.css');
+bdlr.createBundle('lib', bdlr.SCRIPT, '/lib.js').includeFile('bower_components/angular/angular.js').includeGlob('bower_components/*/*.js', ['bower_components/*/index.js', 'bower_components/*/*-mocks.js']);
+bdlr.createBundle('app', bdlr.SCRIPT, '/app.js').includeFile('src/app.js').includeGlob('src/**/*.js');
+bdlr.ENV = 'production';
+
+//...
+
+Object.keys(bdlr.bundles).forEach((bundleName) => {
+  var bundle = bdlr.bundles[bundleName];
+  app.get(bundle.url, (req, res) => {
+    res.set('Content-Type', bundle.type === bdlr.SCRIPT ? 'application/javascript' : 'text/css');
+    res.send(bundle.getMinifiedContent());
+  });
+});
+```
 
 ## Note
 
-The included files depends on the running environment of the application. You can pass `.js`, `.debug.js` or `.min.js`, the result will be the same :
+The included files depends on environment of `bdlr`. You can pass `.js`, `.debug.js` or `.min.js`, the result will be the same :
 
 * in `development`: bdlr will search for `.debug.js` files, if not present, search for `.js` and if not present, take `.min.js`
 * in `production`: bdlr will search for `.min.js` files, if not present, search for `.js` and if not present, take `.debug.js`
@@ -74,8 +103,3 @@ Considering `yourFile.debug.js`, `yourFile.js` and `yourFile.min.js` and a bundl
 
 * in `development`, `yourFile.debug.js` will be taken
 * in `production`, `yourFile.min.js` will be taken
-
-## What's next?
-
-* minify bundles in a single file per bundle if environment production
-* change directory names in rendered string (`toString`)

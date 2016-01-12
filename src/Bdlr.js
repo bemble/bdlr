@@ -10,8 +10,16 @@ class Bdlr {
     this.SCRIPT = Bundle.SCRIPT;
   }
 
-  createBundle(name, type) {
-    return this.bundles[name] = new Bundle(type);
+  createBundle(name, type, renderedUrl) {
+    return this.bundles[name] = new Bundle(type, renderedUrl);
+  }
+
+  get ENV() {
+    return Bundle.ENV;
+  }
+
+  set ENV(newEnv) {
+    Bundle.ENV = newEnv;
   }
 }
 

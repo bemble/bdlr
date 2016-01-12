@@ -3,15 +3,19 @@
 var fs = require('fs');
 var glob = require('glob');
 var path = require('path');
+var crypto = require('crypto');
+var CleanCSS = require('clean-css');
+var UglifyJS = require("uglify-js");
 
 class Bundle {
-  constructor(type) {
+  constructor(type, renderedUrl) {
     if(!type) {
       throw 'No bundle type given';
     }
 
-    this._type = type;
+    this.type = type;
     this._patterns = [];
+    this.url = renderedUrl;
   }
 
   _patternAlreadyExists(pattern) {
@@ -79,29 +83,46 @@ class Bundle {
 
   get _extEnvOrder() {
     let exts = ['.debug', '', '.min'];
-    if(process.env.NODE_ENV === "production") {
-      return exts.reverse();
-    }
-    return exts;
+    return this._isProdEnv ? exts.reverse() : exts;
   }
 
   toString() {
-    return this._type === Bundle.STYLE ? this.toStyleString() : this.toScriptString();
+    return this.type === Bundle.STYLE ? this.toStyleString() : this.toScriptString();
   }
 
   toStyleString() {
+    if(this._isProdEnv) {
+      var hash = crypto.createHash('md5').update(this.getMinifiedContent()).digest('hex');
+      return '<link rel="stylesheet" href="'+this.url+'?etag='+hash+'" />';
+    }
     return this.files.map((elt) => {
         return '<link rel="stylesheet" href="'+elt+'" />';
     }).join('');
   }
 
   toScriptString() {
+    if(this._isProdEnv) {
+      var hash = crypto.createHash('md5').update(this.getMinifiedContent()).digest('hex');
+      return '<script src="'+this.url+'?etag='+hash+'"></script>';
+    }
     return this.files.map((elt) => {
         return '<script src="'+elt+'"></script>';
     }).join('');
   }
+
+  get _isProdEnv() {
+    return Bundle.ENV === 'production' || Bundle.ENV === 'prod';
+  }
+
+  getMinifiedContent() {
+    if(!this._minifiedContent) {
+      this._minifiedContent = this.type === Bundle.STYLE ? new CleanCSS().minify(this.files).styles : UglifyJS.minify(this.files, {compress: false}).code;
+    }
+    return this._minifiedContent;
+  }
 }
 
+Bundle.ENV = process.env.NODE_ENV;
 Bundle.STYLE = 1;
 Bundle.SCRIPT = 2;
 

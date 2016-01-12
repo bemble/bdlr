@@ -102,7 +102,7 @@ suite('Bundle', () => {
     suite('cares about running environment', () => {
       let envBackup;
       suiteSetup(() => {
-        envBackup = process.env.NODE_ENV;
+        envBackup = Bundle.ENV;
 
         fs.writeFileSync('exists1.debug');
         fs.writeFileSync('exists1.min');
@@ -111,7 +111,7 @@ suite('Bundle', () => {
       });
 
       teardown(() => {
-        process.env.NODE_ENV = envBackup
+        Bundle.ENV = envBackup
       });
 
       suiteTeardown(() => {
@@ -122,15 +122,15 @@ suite('Bundle', () => {
       });
 
       test('development', () => {
-        process.env.NODE_ENV = "development";
+        Bundle.ENV = "development";
         bdl.includeFile('exists1').includeFile('exists2').includeFile('another');
         assert.deepEqual(bdl.files, ['exists1.debug', 'exists2', 'another']);
       });
 
       test('production', () => {
-        process.env.NODE_ENV = "production";
+        Bundle.ENV = "production";
         bdl.includeFile('exists1').includeFile('exists2').includeFile('another');
-      assert.deepEqual(bdl.files, ['exists1.min', 'exists2', 'another.min']);
+        assert.deepEqual(bdl.files, ['exists1.min', 'exists2', 'another.min']);
       });
 
     });
@@ -167,6 +167,55 @@ suite('Bundle', () => {
       let scriptBdl = new Bundle(Bundle.SCRIPT);
       scriptBdl.includeGlob('exists*');
       assert.equal(scriptBdl.toString(), '<script src="exists1"></script><script src="exists2"></script>');
+    });
+
+    suite('environnement', () => {
+      let envBackup;
+      suiteSetup(() => {
+        envBackup = Bundle.ENV;
+      });
+
+      teardown(() => {
+        Bundle.ENV = envBackup
+      });
+
+      test('production url the one given in the constructor and an etag is set', () => {
+        Bundle.ENV = 'production';
+        let styleBdl = new Bundle(Bundle.STYLE, '/foo/bar.css');
+        styleBdl.includeGlob('exists*');
+        assert.equal(styleBdl.toString(), '<link rel="stylesheet" href="/foo/bar.css?etag=842531b3dd533f0a349bb6e9f709c334" />');
+
+        let scriptBdl = new Bundle(Bundle.SCRIPT, '/foo/bar.js');
+        scriptBdl.includeGlob('exists*');
+        assert.equal(scriptBdl.toString(), '<script src="/foo/bar.js?etag=c569ddd8dbc9a43c7a9627810289e880"></script>');
+      });
+    });
+  });
+
+  suite('getMinifiedContent', () => {
+    suiteSetup(() => {
+      [1,2].forEach((elt) => {
+        fs.writeFileSync('file'+elt+'.css', '/*Useless comment*/\nbody {\n\tcolor: red;\n}');
+        fs.writeFileSync('file'+elt+'.js', '/*Useless comment*/\nif(false) {\n\tconsole.log(\'never here\');\n}\nconsole.log(\'lol\');\n (function() { function test(){} test(); })();');
+      });
+    });
+
+    suiteTeardown(() => {
+      [1,2].forEach((elt) => {
+        fs.unlinkSync('file'+elt+'.css');
+        fs.unlinkSync('file'+elt+'.js');
+      });
+    });
+
+    test('minify bundles', () => {
+      Bundle.ENV = 'production';
+      let styleBdl = new Bundle(Bundle.STYLE, '/foo/bar.css');
+      styleBdl.includeGlob('file*.css');
+      assert.equal(styleBdl.getMinifiedContent(), 'body{color:red}');
+
+      let scriptBdl = new Bundle(Bundle.SCRIPT, '/foo/bar.js');
+      scriptBdl.includeGlob('file*.js');
+      assert.equal(scriptBdl.getMinifiedContent(), 'if(false){console.log("never here")}console.log("lol");(function(){function o(){}o()})();if(false){console.log("never here")}console.log("lol");(function(){function o(){}o()})();');
     });
   });
 });
