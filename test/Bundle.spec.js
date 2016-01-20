@@ -17,7 +17,7 @@ suite('Bundle', () => {
     try {
       new Bundle();
       assert(false, 'did not throw');
-    } catch(e) {
+    } catch (e) {
       assert(true);
     }
   });
@@ -27,7 +27,7 @@ suite('Bundle', () => {
       assert.strictEqual(bdl.includeFile(), bdl);
     });
 
-    test('can include a file',() => {
+    test('can include a file', () => {
       bdl.includeFile('foo');
       assert.deepEqual(bdl._patterns, [{pattern: 'foo'}]);
     });
@@ -59,16 +59,26 @@ suite('Bundle', () => {
     });
   });
 
+  suite('includeBowerComponents', () => {
+    test('returns current instance', () => {
+      assert.strictEqual(bdl.includeBowerComponents(), bdl);
+    });
+    test('set a flag', () => {
+      bdl.includeBowerComponents();
+      assert.deepEqual(bdl._includeBowerComponents, true);
+    });
+  });
+
   suite('files geter', () => {
     suiteSetup(() => {
-      [1,2,3,4].forEach((elt) => {
-        fs.writeFileSync('exists'+elt);
+      [1, 2, 3, 4].forEach((elt) => {
+        fs.writeFileSync('exists' + elt);
       });
     });
 
     suiteTeardown(() => {
-      [1,2,3,4].forEach((elt) => {
-        fs.unlinkSync('exists'+elt);
+      [1, 2, 3, 4].forEach((elt) => {
+        fs.unlinkSync('exists' + elt);
       });
     });
 
@@ -92,12 +102,69 @@ suite('Bundle', () => {
       assert.deepEqual(bdl.files, ['exists2', 'exists1', 'exists4', 'exists3']);
     });
 
+    suite('bower components', () => {
+      let confs = {
+        'test': {main: ['test.js', 'test.css'], dependencies: {'test-2': '*'}},
+        'test-2': {main: ['test-first.js', 'test-first.css']},
+        'test-dev': {main: ['test-dev.js', 'test-dev.css']}
+      };
+
+      suiteSetup(() => {
+        let rootConf = {
+          dependencies: {test: '*'},
+          devDependencies: {'test-dev': '*'}
+        };
+
+        fs.mkdirSync('bower_components');
+        fs.writeFileSync('bower.json', JSON.stringify(rootConf));
+        Object.keys(confs).forEach((component) => {
+          fs.mkdirSync('bower_components/' + component);
+          fs.writeFileSync('bower_components/' + component + '/.bower.json', JSON.stringify(confs[component]));
+          confs[component].main.forEach((file) => {
+            fs.writeFileSync('bower_components/' + component + '/' + file);
+          });
+        });
+      });
+
+      suiteTeardown(() => {
+        fs.unlinkSync('bower.json');
+
+        Object.keys(confs).forEach((component) => {
+          fs.unlinkSync('bower_components/' + component + '/.bower.json');
+          confs[component].main.forEach((file) => {
+            fs.unlinkSync('bower_components/' + component + '/' + file);
+          });
+          fs.rmdirSync('bower_components/' + component);
+        });
+        fs.rmdirSync('bower_components');
+      });
+
+      test('handles bower components main files and dependencies', () => {
+        let styleBdl = new Bundle(Bundle.STYLE);
+        styleBdl.includeBowerComponents();
+        assert.deepEqual(styleBdl.files, ['bower_components/test-2/test-first.css', 'bower_components/test/test.css']);
+
+        let scriptBdl = new Bundle(Bundle.SCRIPT);
+        scriptBdl.includeBowerComponents();
+        assert.deepEqual(scriptBdl.files, ['bower_components/test-2/test-first.js', 'bower_components/test/test.js']);
+      });
+
+      test('handles devDependencies', () => {
+        let styleBdl = new Bundle(Bundle.STYLE);
+        styleBdl.includeBowerComponents(true);
+        assert.deepEqual(styleBdl.files, ['bower_components/test-2/test-first.css', 'bower_components/test-dev/test-dev.css', 'bower_components/test/test.css']);
+
+        let scriptBdl = new Bundle(Bundle.SCRIPT);
+        scriptBdl.includeBowerComponents(true);
+        assert.deepEqual(scriptBdl.files, ['bower_components/test-2/test-first.js', 'bower_components/test-dev/test-dev.js', 'bower_components/test/test.js']);
+      });
+    });
+
     test('BUG does not care about glob order', () => {
       bdl.includeGlob('exists*').includeGlob('exists[12]');
 
-      assert.deepEqual(bdl.files, ['exists1', 'exists2', 'exists3', 'exists4'], 'expect: '+ ['exists3', 'exists4', 'exists1', 'exists2']);
+      assert.deepEqual(bdl.files, ['exists1', 'exists2', 'exists3', 'exists4'], 'expect: ' + ['exists3', 'exists4', 'exists1', 'exists2']);
     });
-
 
     suite('cares about running environment', () => {
       let envBackup;
@@ -138,14 +205,14 @@ suite('Bundle', () => {
 
   suite('toStrings', () => {
     suiteSetup(() => {
-        [1,2].forEach((elt) => {
-          fs.writeFileSync('exists'+elt);
+      [1, 2].forEach((elt) => {
+        fs.writeFileSync('exists' + elt);
       });
     });
 
     suiteTeardown(() => {
-      [1,2].forEach((elt) => {
-        fs.unlinkSync('exists'+elt);
+      [1, 2].forEach((elt) => {
+        fs.unlinkSync('exists' + elt);
       });
     });
 
@@ -194,16 +261,16 @@ suite('Bundle', () => {
 
   suite('getMinifiedContent', () => {
     suiteSetup(() => {
-      [1,2].forEach((elt) => {
-        fs.writeFileSync('file'+elt+'.css', '/*Useless comment*/\nbody {\n\tcolor: red;\n}');
-        fs.writeFileSync('file'+elt+'.js', '/*Useless comment*/\nif(false) {\n\tconsole.log(\'never here\');\n}\nconsole.log(\'lol\');\n (function() { function test(){} test(); })();');
+      [1, 2].forEach((elt) => {
+        fs.writeFileSync('file' + elt + '.css', '/*Useless comment*/\nbody {\n\tcolor: red;\n}');
+        fs.writeFileSync('file' + elt + '.js', '/*Useless comment*/\nif(false) {\n\tconsole.log(\'never here\');\n}\nconsole.log(\'lol\');\n (function() { function test(){} test(); })();');
       });
     });
 
     suiteTeardown(() => {
-      [1,2].forEach((elt) => {
-        fs.unlinkSync('file'+elt+'.css');
-        fs.unlinkSync('file'+elt+'.js');
+      [1, 2].forEach((elt) => {
+        fs.unlinkSync('file' + elt + '.css');
+        fs.unlinkSync('file' + elt + '.js');
       });
     });
 

@@ -5,16 +5,19 @@ var glob = require('glob');
 var path = require('path');
 var crypto = require('crypto');
 var CleanCSS = require('clean-css');
-var UglifyJS = require("uglify-js");
+var UglifyJS = require('uglify-js');
+var bowerFiles = require('main-bower-files');
 
 class Bundle {
   constructor(type, renderedUrl) {
-    if(!type) {
+    if (!type) {
       throw 'No bundle type given';
     }
 
     this.type = type;
     this._patterns = [];
+    this._includeBowerComponents = false;
+    this._includeBowerDevComponents = false;
     this.url = renderedUrl;
   }
 
@@ -34,34 +37,52 @@ class Bundle {
     return this;
   }
 
+  includeBowerComponents(includeDevComponents) {
+    this._includeBowerComponents = true;
+    this._includeBowerDevComponents = !!includeDevComponents;
+    return this;
+  }
+
   _fileExists(filePath) {
     try {
       return !!fs.statSync(filePath);
-    } catch(e) {}
+    } catch (e) {
+    }
     return false;
   }
 
   get files() {
     let files = [];
     this._patterns.forEach((ptrn) => {
-        // Add a file
-        if(!ptrn.glob) {
-          this._addFile(ptrn.pattern, files, true);
-        }
-        // Add a glob
-        else {
-          glob.sync(ptrn.pattern, {ignore: ptrn.ignored}).forEach((elt) => {
-            this._addFile(elt, files, false);
-          });
-        }
+      // Add a file
+      if (!ptrn.glob) {
+        this._addFile(ptrn.pattern, files, true);
+      }
+      // Add a glob
+      else {
+        glob.sync(ptrn.pattern, {ignore: ptrn.ignored}).forEach((elt) => {
+          this._addFile(elt, files, false);
+        });
+      }
     });
 
+    // Bower components
+    if (this._includeBowerComponents) {
+      let ext = this.type === Bundle.STYLE ? 'css' : 'js';
+      bowerFiles({includeDev: this._includeBowerDevComponents, filter: '**/*.' + ext}).forEach((elt) => {
+        elt = path.relative(process.cwd(), elt);
+        this._addFile(elt, files, true);
+      });
+    }
+
     return files.map((elt) => {
-        let foundPreExt = this._extEnvOrder.find((preExt) => {
-          return this._fileExists(elt.file + preExt + elt.ext);
-        });
-        return foundPreExt !== undefined ? elt.file + foundPreExt + elt.ext : undefined;
-    }).filter((elt) => { return elt !== undefined });
+      let foundPreExt = this._extEnvOrder.find((preExt) => {
+        return this._fileExists(elt.file + preExt + elt.ext);
+      });
+      return foundPreExt !== undefined ? path.posix.normalize(elt.file + foundPreExt + elt.ext) : undefined;
+    }).filter((elt) => {
+      return elt !== undefined
+    });
   }
 
   _addFile(file, files, deletePrevious) {
@@ -72,11 +93,11 @@ class Bundle {
       return elt.file === rawFile;
     });
 
-    if(ptrnIndex >= 0) {
-      if(!deletePrevious) {
+    if (ptrnIndex >= 0) {
+      if (!deletePrevious) {
         return;
       }
-      files.splice(ptrnIndex,1);
+      files.splice(ptrnIndex, 1);
     }
     files.push({file: rawFile, ext: fileParsed.ext});
   }
@@ -91,22 +112,22 @@ class Bundle {
   }
 
   toStyleString() {
-    if(this._isProdEnv) {
+    if (this._isProdEnv) {
       var hash = crypto.createHash('md5').update(this.getMinifiedContent()).digest('hex');
-      return '<link rel="stylesheet" href="'+this.url+'?etag='+hash+'" />';
+      return '<link rel="stylesheet" href="' + this.url + '?etag=' + hash + '" />';
     }
     return this.files.map((elt) => {
-        return '<link rel="stylesheet" href="'+elt+'" />';
+      return '<link rel="stylesheet" href="' + elt + '" />';
     }).join('');
   }
 
   toScriptString() {
-    if(this._isProdEnv) {
+    if (this._isProdEnv) {
       var hash = crypto.createHash('md5').update(this.getMinifiedContent()).digest('hex');
-      return '<script src="'+this.url+'?etag='+hash+'"></script>';
+      return '<script src="' + this.url + '?etag=' + hash + '"></script>';
     }
     return this.files.map((elt) => {
-        return '<script src="'+elt+'"></script>';
+      return '<script src="' + elt + '"></script>';
     }).join('');
   }
 
@@ -115,7 +136,7 @@ class Bundle {
   }
 
   getMinifiedContent() {
-    if(!this._minifiedContent) {
+    if (!this._minifiedContent) {
       this._minifiedContent = this.type === Bundle.STYLE ? new CleanCSS().minify(this.files).styles : UglifyJS.minify(this.files, {compress: false}).code;
     }
     return this._minifiedContent;

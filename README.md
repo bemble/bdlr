@@ -16,9 +16,15 @@ npm install --save bdlr
 ```javascript
 var bdlr = require('bldr');
 
-bdlr.createBundle('css', bdlr.STYLE).includeFile('bower_components/angular/angular.css').includeGlob('bower_components/*/*.css');
-bdlr.createBundle('lib', bdlr.SCRIPT).includeFile('bower_components/angular/angular.js').includeGlob('bower_components/*/*.js', ['bower_components/*/index.js', 'bower_components/*/*-mocks.js']);
-bdlr.createBundle('app', bdlr.SCRIPT).includeFile('app/app.js').includeGlob('app/**/*.js').includeFile('app/bootstrap.js');
+bdlr.createBundle('css', bdlr.STYLE)
+  .includeBowerComponents()
+  .includeGlob('src/**/*.css');
+bdlr.createBundle('lib', bdlr.SCRIPT)
+  .includeBowerComponents(true);
+bdlr.createBundle('app', bdlr.SCRIPT)
+  .includeFile('src/app.js')
+  .includeGlob('src/**/*.js', ['src/**/*.exclude.js'])
+  .includeFile('src/main.js');
 
 var app = express();
 
@@ -57,13 +63,14 @@ html
 
 **Bundle**
 
-* `constructor(type:Bundle.SCRIPT|Bundle.STYLE, renderedUrl:string)`
+* `constructor(type:Bundle.SCRIPT|Bundle.STYLE[, renderedUrl:string])`
 * `type:number`: type of bundle (script or style), `type` param of the constructor
 * `url:string`: `renderedUrl` param of the constructor
 * `files:string[]`: final list of files in the bundle
 * `includeFile(filePath:string)`
 * `includeGlob(glob:string, ignoredGlobs:string[])`
-* `toString():string`: get html tags of the bundle
+* `includeBowerComponents([includeDevComponents:boolean])`: add your bower components in the bundle, including the dev components if arguments is true
+* `toString():string`: get html tags of the bundle. if `bdlr.ENV` is prod, `renderedUrl` will be the url
 * `getMinifiedContent():string`: get the minified content of the bundle
 
 ## Serve production bundles files with Express
@@ -74,9 +81,19 @@ html
 // ...
 var app = express();
 var bdlr = require('bdlr');
-bdlr.createBundle('style', bdlr.STYLE, '/style.css').includeGlob('bower_components/*/*.css');
-bdlr.createBundle('lib', bdlr.SCRIPT, '/lib.js').includeFile('bower_components/angular/angular.js').includeGlob('bower_components/*/*.js', ['bower_components/*/index.js', 'bower_components/*/*-mocks.js']);
-bdlr.createBundle('app', bdlr.SCRIPT, '/app.js').includeFile('src/app.js').includeGlob('src/**/*.js');
+
+var includeBowerDevDependencies = true;
+bdlr.createBundle('style', bdlr.STYLE, '/style.css')
+  .includeBowerComponents(includeBowerDevDependencies)
+  .includeGlob('src/**/*.css');
+  
+bdlr.createBundle('lib', bdlr.SCRIPT, '/lib.js')
+  .includeBowerComponents(includeBowerDevDependencies);
+  
+bdlr.createBundle('app', bdlr.SCRIPT, '/app.js')
+  .includeFile('src/app.js')
+  .includeGlob('src/**/*.js', ['src/**/*.exclude.js'])
+  .includeFile('src/main.js');
 bdlr.ENV = 'production';
 
 //...
