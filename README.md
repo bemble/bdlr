@@ -20,7 +20,7 @@ bdlr.createBundle('css', bdlr.STYLE)
   .includeBowerComponents()
   .includeGlob('src/**/*.css');
 bdlr.createBundle('lib', bdlr.SCRIPT)
-  .includeBowerComponents(true);
+  .includeBowerComponents(true, ['angular-mocks']);
 bdlr.createBundle('app', bdlr.SCRIPT)
   .includeFile('src/app.js')
   .includeGlob('src/**/*.js', ['src/**/*.exclude.js'])
@@ -69,7 +69,7 @@ html
 * `files:string[]`: final list of files in the bundle
 * `includeFile(filePath:string)`
 * `includeGlob(glob:string, ignoredGlobs:string[])`
-* `includeBowerComponents([includeDevComponents:boolean])`: add your bower components in the bundle, including the dev components if arguments is true
+* `includeBowerComponents([includeDevComponents:boolean, [ignoredPackages:string[]]])`: add your bower components in the bundle, including the dev components if arguments is true
 * `toString():string`: get html tags of the bundle. if `bdlr.ENV` is prod, `renderedUrl` will be the url
 * `getMinifiedContent():string`: get the minified content of the bundle
 
@@ -88,7 +88,7 @@ bdlr.createBundle('style', bdlr.STYLE, '/style.css')
   .includeGlob('src/**/*.css');
   
 bdlr.createBundle('lib', bdlr.SCRIPT, '/lib.js')
-  .includeBowerComponents(includeBowerDevDependencies);
+  .includeBowerComponents(includeBowerDevDependencies, ['angular-mocks']);
   
 bdlr.createBundle('app', bdlr.SCRIPT, '/app.js')
   .includeFile('src/app.js')

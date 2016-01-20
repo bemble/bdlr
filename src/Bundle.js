@@ -16,8 +16,11 @@ class Bundle {
 
     this.type = type;
     this._patterns = [];
-    this._includeBowerComponents = false;
-    this._includeBowerDevComponents = false;
+    this._bowerComponents = {
+      included: false,
+      includeDev: false,
+      excluded: []
+    };
     this.url = renderedUrl;
   }
 
@@ -37,9 +40,10 @@ class Bundle {
     return this;
   }
 
-  includeBowerComponents(includeDevComponents) {
-    this._includeBowerComponents = true;
-    this._includeBowerDevComponents = !!includeDevComponents;
+  includeBowerComponents(includeDevComponents, ignoredPackages) {
+    this._bowerComponents.included = true;
+    this._bowerComponents.includeDev = !!includeDevComponents;
+    this._bowerComponents.excluded = ignoredPackages || [];
     return this;
   }
 
@@ -67,9 +71,14 @@ class Bundle {
     });
 
     // Bower components
-    if (this._includeBowerComponents) {
+    if (this._bowerComponents.included) {
       let ext = this.type === Bundle.STYLE ? 'css' : 'js';
-      bowerFiles({includeDev: this._includeBowerDevComponents, filter: '**/*.' + ext}).forEach((elt) => {
+      let overrides = {};
+      this._bowerComponents.excluded.forEach((pkg) => {
+        overrides[pkg] = {ignore: true};
+      });
+
+      bowerFiles({includeDev: this._bowerComponents.includeDev, filter: '**/*.' + ext, overrides: overrides}).forEach((elt) => {
         elt = path.relative(process.cwd(), elt);
         this._addFile(elt, files, true);
       });

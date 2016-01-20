@@ -65,7 +65,7 @@ suite('Bundle', () => {
     });
     test('set a flag', () => {
       bdl.includeBowerComponents();
-      assert.deepEqual(bdl._includeBowerComponents, true);
+      assert.deepEqual(bdl._bowerComponents.included, true);
     });
   });
 
@@ -157,6 +157,16 @@ suite('Bundle', () => {
         let scriptBdl = new Bundle(Bundle.SCRIPT);
         scriptBdl.includeBowerComponents(true);
         assert.deepEqual(scriptBdl.files, ['bower_components/test-2/test-first.js', 'bower_components/test-dev/test-dev.js', 'bower_components/test/test.js']);
+      });
+
+      test('can ignore packages', () => {
+        let styleBdl = new Bundle(Bundle.STYLE);
+        styleBdl.includeBowerComponents(false, ['test-2']);
+        assert.deepEqual(styleBdl.files, ['bower_components/test/test.css']);
+
+        let scriptBdl = new Bundle(Bundle.SCRIPT);
+        scriptBdl.includeBowerComponents(true, ['test-2']);
+        assert.deepEqual(scriptBdl.files, ['bower_components/test-dev/test-dev.js', 'bower_components/test/test.js']);
       });
     });
 
