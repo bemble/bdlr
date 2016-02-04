@@ -28,5 +28,8 @@
     "install": "^0.4.2",
     "main-bower-files": "^2.11.1",
     "uglify-js": "^2.6.1"
+  },
+  "engines": {
+    "node": ">=4.2.6"
   }
 }
