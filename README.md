@@ -1,5 +1,10 @@
 # bdlr
-Create &amp; use bundles like you would do in .NET.
+
+[![NPM version][npm-image]][npm-url]
+[![Build Status][travis-image]][travis-url]
+[![Coverage Status][coveralls-image]][coveralls-url]
+
+> Create and use bundles like you would do in .NET.
 
 ## How to use?
 
@@ -120,3 +125,18 @@ Considering `yourFile.debug.js`, `yourFile.js` and `yourFile.min.js` and a bundl
 
 * in `development`, `yourFile.debug.js` will be taken
 * in `production`, `yourFile.min.js` will be taken
+
+## Dev note
+
+To run the tests, simply install `mocha` globally and run:
+
+```sh
+mocha
+```
+
+[npm-url]:https://npmjs.org/package/bdlr
+[npm-image]:https://badge.fury.io/js/bdlr.svg
+[travis-url]:https://travis-ci.org/pierrecle/bdlr
+[travis-image]:https://travis-ci.org/pierrecle/bdlr.svg?branch=master
+[coveralls-url]:https://coveralls.io/github/pierrecle/bdlr?branch=master
+[coveralls-image]:https://coveralls.io/repos/github/pierrecle/bdlr/badge.svg?branch=master
