@@ -19,7 +19,7 @@ npm install --save bdlr
 **index.js**
 
 ```javascript
-var bdlr = require('bldr');
+var bdlr = require('bdlr');
 
 bdlr.createBundle('css', bdlr.STYLE)
   .includeBowerComponents()
