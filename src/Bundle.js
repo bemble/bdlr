@@ -22,6 +22,7 @@ class Bundle {
       excluded: []
     };
     this.url = renderedUrl;
+    this.rebaseConf =  {};
   }
 
   _patternAlreadyExists(pattern) {
@@ -116,6 +117,13 @@ class Bundle {
     return this._isProdEnv ? exts.reverse() : exts;
   }
 
+  rebase(rebaseConf) {
+    Object.keys(rebaseConf).forEach((dir) => {
+      this.rebaseConf[dir] = rebaseConf[dir];
+    });
+    return this;
+  }
+
   toString() {
     return this.type === Bundle.STYLE ? this.toStyleString() : this.toScriptString();
   }
@@ -123,10 +131,14 @@ class Bundle {
   toStyleString() {
     if (this._isProdEnv) {
       var hash = crypto.createHash('md5').update(this.getMinifiedContent()).digest('hex');
-      return '<link rel="stylesheet" href="' + this.url + '?etag=' + hash + '" />';
+      return '<link rel="stylesheet" type="text/css" href="' + this.url + '?etag=' + hash + '" />';
     }
     return this.files.map((elt) => {
-      return '<link rel="stylesheet" href="' + elt + '" />';
+      var url = elt;
+      Object.keys(this.rebaseConf).forEach((dir) => {
+        url = url.replace(new RegExp('^' + dir), this.rebaseConf[dir]);
+      });
+      return '<link rel="stylesheet" type="text/css" href="' + url + '" />';
     }).join('');
   }
 
@@ -136,7 +148,11 @@ class Bundle {
       return '<script src="' + this.url + '?etag=' + hash + '"></script>';
     }
     return this.files.map((elt) => {
-      return '<script src="' + elt + '"></script>';
+      var url = elt;
+      Object.keys(this.rebaseConf).forEach((dir) => {
+        url = url.replace(new RegExp('^' + dir), this.rebaseConf[dir]);
+      });
+      return '<script src="' + url + '"></script>';
     }).join('');
   }
 

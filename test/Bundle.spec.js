@@ -228,7 +228,7 @@ suite('Bundle', () => {
 
     test('get style tag string of bundle', () => {
       bdl.includeGlob('exists*');
-      assert.equal(bdl.toStyleString(), '<link rel="stylesheet" href="exists1" /><link rel="stylesheet" href="exists2" />');
+      assert.equal(bdl.toStyleString(), '<link rel="stylesheet" type="text/css" href="exists1" /><link rel="stylesheet" type="text/css" href="exists2" />');
     });
 
     test('get script tag string of bundle', () => {
@@ -239,7 +239,7 @@ suite('Bundle', () => {
     test('get string depending on bundle type', () => {
       let styleBdl = new Bundle(Bundle.STYLE);
       styleBdl.includeGlob('exists*');
-      assert.equal(styleBdl.toString(), '<link rel="stylesheet" href="exists1" /><link rel="stylesheet" href="exists2" />');
+      assert.equal(styleBdl.toString(), '<link rel="stylesheet" type="text/css" href="exists1" /><link rel="stylesheet" type="text/css" href="exists2" />');
 
       let scriptBdl = new Bundle(Bundle.SCRIPT);
       scriptBdl.includeGlob('exists*');
@@ -260,12 +260,41 @@ suite('Bundle', () => {
         Bundle.ENV = 'production';
         let styleBdl = new Bundle(Bundle.STYLE, '/foo/bar.css');
         styleBdl.includeGlob('exists*');
-        assert.equal(styleBdl.toString(), '<link rel="stylesheet" href="/foo/bar.css?etag=842531b3dd533f0a349bb6e9f709c334" />');
+        assert.equal(styleBdl.toString(), '<link rel="stylesheet" type="text/css" href="/foo/bar.css?etag=842531b3dd533f0a349bb6e9f709c334" />');
 
         let scriptBdl = new Bundle(Bundle.SCRIPT, '/foo/bar.js');
         scriptBdl.includeGlob('exists*');
         assert.equal(scriptBdl.toString(), '<script src="/foo/bar.js?etag=c569ddd8dbc9a43c7a9627810289e880"></script>');
       });
+    });
+  });
+
+  suite('rebase', () => {
+    suiteSetup(() => {
+      fs.mkdirSync('dir');
+      [1, 2].forEach((elt) => {
+        fs.writeFileSync('dir/exists' + elt);
+      });
+    });
+
+    suiteTeardown(() => {
+      [1, 2].forEach((elt) => {
+        fs.unlinkSync('dir/exists' + elt);
+      });
+      fs.rmdirSync('dir');
+    });
+
+    test('can rebase directories', () => {
+      let styleBdl = new Bundle(Bundle.STYLE);
+      styleBdl.includeGlob('dir/*').rebase({'dir': 'foo'});
+      assert.equal(styleBdl.toString(), '<link rel="stylesheet" type="text/css" href="foo/exists1" /><link rel="stylesheet" type="text/css" href="foo/exists2" />');
+
+      let scriptBdl = new Bundle(Bundle.SCRIPT);
+      scriptBdl.includeGlob('dir/*').rebase({'dir': 'foo'}).rebase({'dir': 'bar'});
+      assert.equal(scriptBdl.toString(), '<script src="bar/exists1"></script><script src="bar/exists2"></script>');
+
+      scriptBdl.rebase({'dir': 'blue', 'blue': 'foo'});
+      assert.equal(scriptBdl.toString(), '<script src="foo/exists1"></script><script src="foo/exists2"></script>');
     });
   });
 
