@@ -123,10 +123,10 @@ class Bundle {
   toStyleString() {
     if (this._isProdEnv) {
       var hash = crypto.createHash('md5').update(this.getMinifiedContent()).digest('hex');
-      return '<link rel="stylesheet" href="' + this.url + '?etag=' + hash + '" />';
+      return '<link rel="stylesheet" type="text/css" href="' + this.url + '?etag=' + hash + '" />';
     }
     return this.files.map((elt) => {
-      return '<link rel="stylesheet" href="' + elt + '" />';
+      return '<link rel="stylesheet" type="text/css" href="' + elt + '" />';
     }).join('');
   }
 

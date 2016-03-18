@@ -228,7 +228,7 @@ suite('Bundle', () => {
 
     test('get style tag string of bundle', () => {
       bdl.includeGlob('exists*');
-      assert.equal(bdl.toStyleString(), '<link rel="stylesheet" href="exists1" /><link rel="stylesheet" href="exists2" />');
+      assert.equal(bdl.toStyleString(), '<link rel="stylesheet" type="text/css" href="exists1" /><link rel="stylesheet" type="text/css" href="exists2" />');
     });
 
     test('get script tag string of bundle', () => {
@@ -239,7 +239,7 @@ suite('Bundle', () => {
     test('get string depending on bundle type', () => {
       let styleBdl = new Bundle(Bundle.STYLE);
       styleBdl.includeGlob('exists*');
-      assert.equal(styleBdl.toString(), '<link rel="stylesheet" href="exists1" /><link rel="stylesheet" href="exists2" />');
+      assert.equal(styleBdl.toString(), '<link rel="stylesheet" type="text/css" href="exists1" /><link rel="stylesheet" type="text/css" href="exists2" />');
 
       let scriptBdl = new Bundle(Bundle.SCRIPT);
       scriptBdl.includeGlob('exists*');
@@ -260,7 +260,7 @@ suite('Bundle', () => {
         Bundle.ENV = 'production';
         let styleBdl = new Bundle(Bundle.STYLE, '/foo/bar.css');
         styleBdl.includeGlob('exists*');
-        assert.equal(styleBdl.toString(), '<link rel="stylesheet" href="/foo/bar.css?etag=842531b3dd533f0a349bb6e9f709c334" />');
+        assert.equal(styleBdl.toString(), '<link rel="stylesheet" type="text/css" href="/foo/bar.css?etag=842531b3dd533f0a349bb6e9f709c334" />');
 
         let scriptBdl = new Bundle(Bundle.SCRIPT, '/foo/bar.js');
         scriptBdl.includeGlob('exists*');
