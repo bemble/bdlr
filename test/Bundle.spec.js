@@ -269,6 +269,35 @@ suite('Bundle', () => {
     });
   });
 
+  suite('rebase', () => {
+    suiteSetup(() => {
+      fs.mkdirSync('dir');
+      [1, 2].forEach((elt) => {
+        fs.writeFileSync('dir/exists' + elt);
+      });
+    });
+
+    suiteTeardown(() => {
+      [1, 2].forEach((elt) => {
+        fs.unlinkSync('dir/exists' + elt);
+      });
+      fs.rmdirSync('dir');
+    });
+
+    test('can rebase directories', () => {
+      let styleBdl = new Bundle(Bundle.STYLE);
+      styleBdl.includeGlob('dir/*').rebase({'dir': 'foo'});
+      assert.equal(styleBdl.toString(), '<link rel="stylesheet" type="text/css" href="foo/exists1" /><link rel="stylesheet" type="text/css" href="foo/exists2" />');
+
+      let scriptBdl = new Bundle(Bundle.SCRIPT);
+      scriptBdl.includeGlob('dir/*').rebase({'dir': 'foo'}).rebase({'dir': 'bar'});
+      assert.equal(scriptBdl.toString(), '<script src="bar/exists1"></script><script src="bar/exists2"></script>');
+
+      scriptBdl.rebase({'dir': 'blue', 'blue': 'foo'});
+      assert.equal(scriptBdl.toString(), '<script src="foo/exists1"></script><script src="foo/exists2"></script>');
+    });
+  });
+
   suite('getMinifiedContent', () => {
     suiteSetup(() => {
       [1, 2].forEach((elt) => {

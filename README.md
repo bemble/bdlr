@@ -25,7 +25,8 @@ bdlr.createBundle('css', bdlr.STYLE)
   .includeBowerComponents()
   .includeGlob('src/**/*.css');
 bdlr.createBundle('lib', bdlr.SCRIPT)
-  .includeBowerComponents(true, ['angular-mocks']);
+  .includeBowerComponents(true, ['angular-mocks'])
+  .rebase({'bower_components': 'assets'});
 bdlr.createBundle('app', bdlr.SCRIPT)
   .includeFile('src/app.js')
   .includeGlob('src/**/*.js', ['src/**/*.exclude.js'])
@@ -72,10 +73,11 @@ html
 * `type:number`: type of bundle (script or style), `type` param of the constructor
 * `url:string`: `renderedUrl` param of the constructor
 * `files:string[]`: final list of files in the bundle
-* `includeFile(filePath:string)`
-* `includeGlob(glob:string, ignoredGlobs:string[])`
-* `includeBowerComponents([includeDevComponents:boolean, [ignoredPackages:string[]]])`: add your bower components in the bundle, including the dev components if arguments is true
+* `includeFile(filePath:string):Bundle`
+* `includeGlob(glob:string, ignoredGlobs:string[]):Bundle`
+* `includeBowerComponents([includeDevComponents:boolean, [ignoredPackages:string[]]]):Bundle`: add your bower components in the bundle, including the dev components if arguments is true
 * `toString():string`: get html tags of the bundle. if `bdlr.ENV` is prod, `renderedUrl` will be the url
+* `rebase(rebaseConf:object):Bundle`: when `bdlr.ENV` is `dev`, allows you to rebase directories
 * `getMinifiedContent():string`: get the minified content of the bundle
 
 ## Serve production bundles files with Express
