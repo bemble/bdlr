@@ -15,6 +15,8 @@ namespace Bdlr {
   }
 
   export interface Bdlr {
+    SCRIPT:BundleType;
+    STYLE:BundleType;
     ENV:string;
     bundles:{[name:string]: Bundle};
     createBundle(name:string, type:BundleType, renderedUrl?:string);
