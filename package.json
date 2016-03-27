@@ -1,6 +1,6 @@
 {
   "name": "bdlr",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Create and use bundles like you would do in .NET.",
   "main": "index.js",
   "typings": "index.d.ts",
