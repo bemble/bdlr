@@ -3,6 +3,7 @@
   "version": "1.4.2",
   "description": "Create and use bundles like you would do in .NET.",
   "main": "index.js",
+  "typings": "index.d.ts",
   "scripts": {
     "test": "istanbul cover _mocha --report lcovonly -- -R spec",
     "coveralls": "cat ./coverage/lcov.info | coveralls"
